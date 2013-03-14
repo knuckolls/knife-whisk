@@ -1,0 +1,53 @@
+mixins:
+  chef_defaults:
+    user-data: user_data/before_bootstrap.sh
+    template: chef_full
+  aws_defaults:
+    provider: aws
+    image: ami-950680fc      # ubuntu instance store
+    subnet: subnet-12345678  # private subnet
+    region: us-east-1
+    flavor: m1.small
+    ssh-user: ubuntu
+    security-groups: default
+  rackspace_defaults:
+    provider: rackspace
+    flavor: 2
+  ebs:
+    image: ami-e50e888c
+  public_subnet:
+    subnet: subnet-87654321
+  nginx_load_balancer:
+    run-list:
+    - "recipe[nginx]
+    - "role[load_balancer]"
+ 
+config:
+  aws:
+    security-groups:
+      default: sg-12345678
+      load_balancer: sg-23456789
+      java_app_server: sg-34567890
+      database_server: sg-45678901
+ 
+servers:
+  aws_prod_nginx_load_balancer:
+    mixins:
+    - aws_defaults
+    - chef_defaults
+    - nginx_load_balancer
+    - public_subnet
+    config:
+      node-name: aws-prod-load-balancer
+      security-groups:
+      - default
+      - load_balancer
+      environment: prod
+  rackspace_stage_nginx_load_balancer:
+    mixins:
+    - rackspace_defaults
+    - chef_defaults
+    - nginx_load_balancer
+    config:
+      node-name: rackspace-load-balancer
+      environment: stage
