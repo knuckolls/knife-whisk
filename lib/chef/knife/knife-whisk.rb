@@ -18,7 +18,12 @@ class Chef
             :long => '--mixins MIXINS',
             :description => "Overrides server mixins, takes comma seperated list of mixins",
             :proc => Proc.new { |input| input.split(",") }
-          
+
+          option :provider,
+            :short => "-P PROVIDER",
+            :long => "--provider PROVIDER",
+            :description => "Name of the provider of the knife plugin you want to use"
+
           option :overrides,
             :short => '-O STRING',
             :long => '--overrides STRING',
