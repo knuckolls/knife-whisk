@@ -178,18 +178,38 @@ class Chef
         output_hash = output_hash.merge(@config[:overrides])
       end
       
-      #convert security-group names to ids if needed and make sure they exist in the lookup hash
-      unless output_hash["security-groups"].nil?
-        exit_with_message("security-groups not defined in whisk.yml") unless get_config["security-groups"]
-        output_hash["security-groups"].split(',').each { |group| exit_with_message("#{group} security group does not exist in whisk.yml") unless security_group_exists?(group)}
-        output_hash["security-group-ids"] = get_security_groups(output_hash["security-groups"])
-        output_hash.delete("security-groups")
+      if output_hash["provider"] == "ec2"
+       #convert security-group names to ids if needed and make sure they exist in the lookup hash
+       unless output_hash["security-groups"].nil?
+         exit_with_message("security-groups not defined in whisk.yml") unless get_config["security-groups"]
+         output_hash["security-groups"].split(',').each { |group| exit_with_message("#{group} security group does not exist in whisk.yml") unless security_group_exists?(group)}
+         output_hash["security-group-ids"] = get_security_groups(output_hash["security-groups"])
+         output_hash.delete("security-groups")
+       end
       end
       
       # run-list needs quotes for knife ec2 to accept the arg
       output_hash["run-list"] = add_quotes(output_hash["run-list"]) unless output_hash["run-list"].nil?
 
-      printf "knife ec2 server create %s\n", output_hash.map { |key, value| ["--"+key, value] }.join(" ")
+      # rip out the provider from the hash because it's not a real flag
+      provider = output_hash["provider"]
+
+      # backwards compatibility
+      provider = "aws" if provider == ""
+
+      output_hash.delete("provider")
+
+      provider = @config[:provider] if @config[:provider] != ""
+
+      # make this configurable in the whisk file.
+      provider_commands = {
+        "aws"       => "ec2 server create",
+        "ec2"       => "ec2 server create",
+        "rackspace" => "rackspace server create",
+        "kvm"       => "kvm vm create"
+      }
+
+      printf "knife #{provider_commands[provider]} %s\n", output_hash.map { |key, value| ["--"+key, value] }.join(" ")
     end
   end
 end

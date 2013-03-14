@@ -19,7 +19,7 @@ mixins:
     subnet: subnet-87654321
   nginx_load_balancer:
     run-list:
-    - "recipe[nginx]
+    - "recipe[nginx]"
     - "role[load_balancer]"
  
 config:
